@@ -142,6 +142,17 @@
         # Bazel sees it whether launched from `nix develop` or the lint app.
         profile = ''
           export OT_BINDGEN_LLVM=${lrPkgs.libclang_21}
+
+          # Nixpkgs' OpenSSL looks for the CA bundle in /etc/ssl/certs.
+          # RHEL-family hosts ship it in /etc/pki/tls/certs instead.
+          case "$(. /etc/os-release 2>/dev/null; echo "$ID $ID_LIKE")" in
+            *rhel* | *fedora* | *centos*)
+              if [ -z "''${SSL_CERT_FILE-}" ]; then
+                export SSL_CERT_FILE=/etc/pki/tls/certs/ca-bundle.crt
+                export CURL_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt
+              fi
+              ;;
+          esac
         '';
       };
     in {
